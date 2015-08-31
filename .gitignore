@@ -11,3 +11,9 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+
+getdata_projectfiles_UCI HAR Dataset
+*.csv
+*.xml
+*.xlsx
+*.xls
