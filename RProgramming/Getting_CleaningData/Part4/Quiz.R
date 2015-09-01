@@ -11,7 +11,7 @@ money <- as.numeric(money)
 mean(money, na.rm = T)
 
 countryNames <- gdp$X.2
-ength(grep("^United", countryNames))
+length(grep("^United", countryNames))
 
 edu <- read.csv("EDU.csv", na.strings = c(""," "))
 merged <- merge(rankedgdp, edu, by.x = "X", by.y = "CountryCode")
