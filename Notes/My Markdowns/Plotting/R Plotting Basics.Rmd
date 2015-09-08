@@ -97,6 +97,10 @@ Used for showing 2 columns of the data simultaneously.
 #Y axis shows the pm25 values, by region (x)
 #From this plot, we can see the mean of west counties is lower than east, but the west also has counties with the highest pollution levels. (exceeding the 12 mark)
 boxplot(data=pollution, pm25 ~ region, col= 'red')
+
+# another dataset...here each box plot shows airquality for each month (from May)\
+airquality <- transform(airquality, Month = factor(Month))
+boxplot(Ozone ~ Month, airquality, xlab = "Month", ylab = "Ozone (ppb)")
 ```
 
 ####2.  Multiple Histograms
