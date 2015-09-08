@@ -1,0 +1,126 @@
+---
+title: "Plotting"
+author: "Ankur Agarwal"
+date: "September 7, 2015"
+output: 
+  html_document: 
+    toc: yes
+---
+[**R gallery cool graphs **](http://rgraphgallery.blogspot.com/)
+
+This is an R Markdown document discussing some R plotting techniques. It is a compilation of lecture notes and some of my own trials.**The most important thing is the question to be asked; all charts and analysis depends on the thing we are looking for.**
+
+##Analytic Graphics: Some points to remember
+1. Show comparison (Hypothesis should be relative).
+2. Show causality (mechanism or explanation) of why data is like this.
+3. Show multivariate data.
+4. Integration different modes of evidence presentation.
+5. Describe and document evidence (Tell a complete story).
+6. Kickass content.
+
+##Exploratory Graphs:
++ Quick and dirty
++ Goal is personal understanding
++ Used to highlight broad features
++ Can be cleaned up for sharing
+
+Here we use some 'US EPA' data about pollution in different counties.
+
+**Question:** Do any counties exceed the standard of 12 $\mu g/m^3$?
+
+Read data.
+```{r}
+pollution <- read.csv("data/avgpm25.csv", colClasses = c("numeric", "character", "factor",
+                                                         "numeric", "numeric"))
+head(pollution, 4)
+```
+
+###One dimensional summaries
+Good for summarizing 1D data.
+
+####1.  5 or 6 number summary
+Not a plot. Just a table
+```{r}
+summary(pollution$pm25)
+```
+
+####2.  Boxplot
+```{r}
+boxplot(pollution$pm25, col = 'blue')
+```
+
+####3.  Histogram
+```{r}
+#'breaks' can be used to increase/decrease histogram granularity
+hist(pollution$pm25, plot = T, breaks = 50, col = 'red')
+#the rug function shows how many values lie in each bin...for ease of analyis
+rug(pollution$pm25)
+```
+
+####4.  Density Plot
+```{r}
+d<-density(pollution$pm25)
+plot(d)
+polygon(d, col = 'green')
+```
+
+####5.  Bar Plot
+Mostly used to show comparison
+```{r}
+# Here we are tabulating number of counties by region(east or west)
+# region was a factor
+barplot(table(pollution$region), col= 'wheat', main="Number of counties in region")
+```
+
+###Overlaying Features
+We can add lines, etc. to the charts to point out information.
+For example, the histogram is unable to show mean and median. We can explicitly add lines at these positions to show these values.We can also add the line for the limit we want...in this case 12.
+```{r}
+hist(pollution$pm25, plot = T, col = 'red')
+rug(pollution$pm25)
+abline(v = 12, lwd = 2);
+abline(v = mean(pollution$pm25), lwd = 2);
+abline(v = median(pollution$pm25), lwd = 4,  col = 'green')
+```
+
+Showing the 12$\mu g/m^3$ line on the boxplot.
+```{r}
+boxplot(pollution$pm25)
+abline(h=12)
+```
+
+###Two dimensional summaries
+Used for showing 2 columns of the data simultaneously.
+
+####1.  Multiple BoxPlots
+```{r}
+#Y axis shows the pm25 values, by region (x)
+#From this plot, we can see the mean of west counties is lower than east, but the west also has counties with the highest pollution levels. (exceeding the 12 mark)
+boxplot(data=pollution, pm25 ~ region, col= 'red')
+```
+
+####2.  Multiple Histograms
+```{r}
+#We can plot multiple histograms in one window, to see if we find any relationships
+par(mfrow = c(2,1) ,mar = c(4,4,2,1) )
+hist(subset(pollution, region=="east")$pm25, col= 'green')
+hist(subset(pollution, region=="west")$pm25, col= 'green')
+```
+
+####3.  Scatterplots
+Here is an example showing scatter plots.
+```{r}
+#Plotting pollution wrt lattitudes
+#Different regions have different colors
+with(pollution, plot(latitude, pm25, col = region))
+abline(h = 12, lwd = 2, lty = 2)
+
+#Now we want to see latitudes at different regions(east and west)
+par(mfrow = c(1,2) ,mar = c(5,4,2,1) )
+with(subset(pollution, region=="west"), plot(latitude, pm25, main= "West"))
+abline(h = 12, lwd = 2, lty = 2)
+with(subset(pollution, region=="east"), plot(latitude, pm25, main= "East"))
+abline(h = 12, lwd = 2, lty = 2)
+
+```
+

@@ -1,0 +1,97 @@
+---
+title: "R Basics"
+author: "Ankur Agarwal"
+date: "August 31, 2015"
+output: 
+  html_document: 
+    fig_caption: yes
+    toc: yes
+---
+This document is used to keep a record of basic (but important) things one comes across. Code snippets are also added for easy understanding and practise.
+
+##Downloading/Reading/Writing a data frame
+Some examples.
+For certain file types the mode needs to be "wb"
+```{r eval=FALSE}
+download.file(fileUrl, destfile = fileName, mode="wb")
+```
+There are lots of functions for reading/ writing.
+
+
+##Simulating a data frame
+
+```{r}
+d <- data.frame(id=sample(1:3, 10, T), val1 = rbinom(10, 10, 0.5), val2 = rnorm(10, mean = 5))
+
+head(d,3)
+```
+
+data.frame 'd' has 3 columns: id, val1 and val2.
+
+##Applying factors from another data frame
+Now say, the 'id' column in previous data set refers to some names; stored in another dataframe.
+```{r}
+dname <- data.frame(id = 1:3,name = c("A","B", "C"))
+
+dname
+```
+We can replace the values in d\$id with the values in dname\$name.
+First, we'll need to factor both, so that they can be replaced w/o for loops.
+
+```{r}
+d$id <- factor(d$id, 1:3)
+dname$name <- factor(dname$name)
+levels(d$id) <- levels(dname$name)
+head(d,3)
+```
+
+Now we can tabulate this data frame with the names instead of numbers, making it for easy reading.
+```{r}
+table(d$id)
+table(d$id, d$val1)
+```
+
+#JSON
+Usefule when receiving JSON based replies.
+```{r eval=FALSE}
+#Receive the GET request in 'req'
+data <- content(req) 
+#The data can be converted to JSON form
+JSONData <- toJSON(data)
+#This is data in JSON form 
+#If the data has a good structure, convert to a data.frame
+df <- fromJSON(JSONData)
+```
+
+#Finding/ counting TRUE indices
+```{r}
+d <- sample(LETTERS[1:3], 10, replace = T)
+print(d)
+#sum will return total number of occurences that satisfy a condition
+sum(d == 'A')
+#which will return the actual indices
+which(d == 'A')
+```
+
+#String Operations
+These are just representatives. Look in 'help' or online.
+```{r}
+#strsplit: split elements of a character vector
+#Example taken from help ?strsplit
+#uses regex. so '.' means any character.
+strsplit("a.b.c", ".")
+#Needs some special treatment 
+strsplit("a.b.c", "[.]")
+strsplit("a.b.c", ".", fixed = TRUE)
+
+#substitute
+#Also a regexp (regex expression)
+gsub("[.]", " ", "gmail.com")
+
+#grep
+#self explanatory
+grep("[jJ]une", c("June","July", "August"), value = T)
+```
+
+
+
