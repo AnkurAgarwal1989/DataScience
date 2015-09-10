@@ -5,5 +5,5 @@ par(mfrow = c(1,1))
 plot(x = df$DateTime, y = df$Global_active_power, type='l',
      ylab = "Global Active Power (kilowatts)", xlab = "")
 
-dev.copy(png, 'plot2.png', width = 640, height = 480)
+dev.copy(png, 'plot2.png', width = 480, height = 480)
 dev.off()

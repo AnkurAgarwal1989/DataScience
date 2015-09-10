@@ -119,7 +119,7 @@ with(df, {
 ##Task 3: Saving to file
 We need to open the right device to use. Remember to close once completed.
 ```{r eval=FALSE}
-dev.copy(png, 'plot1.R', width = 640, height = 480)
+dev.copy(png, 'plot1.R', width = 480, height = 480)
 dev.off()
 ```
 

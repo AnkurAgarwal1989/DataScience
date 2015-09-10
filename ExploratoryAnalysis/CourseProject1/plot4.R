@@ -26,9 +26,9 @@ with(df, {
     
     #2,2
     plot(x = df$DateTime, y = df$Global_reactive_power, type='l',
-         ylab = "Global Reactive Power", xlab = "")
+         ylab = "Global_Reactive_Power", xlab = "")
     title(sub = 'datetime', line = 3)
 })
 
-dev.copy(png, 'plot4.png', width = 640, height = 480)
+dev.copy(png, 'plot4.png', width = 480, height = 480)
 dev.off()
