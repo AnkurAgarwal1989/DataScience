@@ -1,0 +1,125 @@
+---
+title: "Course Project 1"
+author: "Ankur Agarwal"
+date: "September 9, 2015"
+output: 
+  html_document: 
+    fig_width: 5
+    toc: yes
+---
+
+#Course Project 1
+
+This R Markdown document shows some important code snippets used in Exploratory Data Analysis: Course Project 1.
+
+##Task 1: Reading Data
+
+The original data is gigantic and we only need to use the data for dates: 1/2/2007 to 2/2/2007. There are lots of ways to do that. 
+
+> Save the data once its read. Don't need to read it again and again.
+Also make this a function which returns a data frame.
+
+```{r, eval=FALSE}
+#Method 1: Fast and too many steps
+#We can grep for the required data
+read.table(pipe('grep "^[1-2]/2/2007" "household_power_consumption.txt"'))
+#This will need additional processing to split the single column into multiple columns but is pretty fast
+
+#Method 2: Slow and too many steps (readDataFunc_lapply.R)
+#We can read in only the date column 
+colClasses = c('character', rep('NULL', 8))
+#Then extract only the dates we require. Then read only the row indices by looping and skipping
+requiredDates <- which(dataDates$Date %in% c("1/2/2007", "2/2/2007"))
+d <- lapply(reqdDates, 
+                function(x){read.table("household_power_consumption.txt", sep = ';',
+                                       na.strings = '?',nrows = 1, header = F, as.is = T,
+                                       skip = x, colClasses = classes, comment.char = "")})
+
+#Method 3: Slow but no additional steps (readDataFunc_sqldf.R)
+requiredData <- read.csv2.sql("household_power_consumption.txt", sql = "SELECT * FROM file
+                              WHERE Date in ('1/2/2007', '2/2/2007')")
+```
+```{r message=FALSE, cache=TRUE}
+source('readDataFunc_sqldf.R')
+df <- readDataFunc()
+```
+```{r, eval=FALSE}
+# The readDataFunc also pastes the date and time together and converts them from char to POSIX time format
+requiredData$Date <- as.character.Date(requiredData$Date)
+requiredData$Time <- as.character.Date(requiredData$Time)
+requiredData$DateTime <- paste(requiredData$Date, requiredData$Time)
+requiredData$DateTime <- strptime(requiredData$DateTime, "%d/%m/%Y %H:%M:%S")
+```
+
+
+##Task 2: Plotting
+
+*   **Plot 1**  
+Simple histogram
+```{r}
+hist(df$Global_active_power, col='red', 
+     main = "Global Active Power", xlab = 'Global Active Power (kilowatts)')
+```
+
+*   **Plot 2**  
+Line plot with Date on X axis
+```{r}
+plot(x = df$DateTime, y = df$Global_active_power, type='l',
+     ylab = "Global Active Power (kilowatts)", xlab = "")
+
+#these plots are automatically showing wdays in the x ticks, but if they don't we can change
+#x tick positions and labels
+```
+
+*   **Plot 3**  
+3 Line plots in 1
+```{r}
+plot(x = df$DateTime, y = df$Sub_metering_1, type='l',
+     ylab = "Energy Sub Metering", xlab = "")
+lines(x = df$DateTime, y = df$Sub_metering_2, col = 'red')
+lines(x = df$DateTime, y = df$Sub_metering_3, col = 'blue')
+legend("topright",lty = 1,
+       col = c("black","blue", "red"), 
+       legend = c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"))
+```
+
+*   **Plot 4**
+4 subplots
+```{r}
+par(mfrow=c(2,2), mar = c(4,4,2,1), oma=c(0,0,0,0))
+with(df, {
+    #1,1
+    plot(x = df$DateTime, y = df$Global_active_power, type='l',
+         ylab = "Global Active Power", xlab = "");
+    
+    #2,1
+    plot(x = df$DateTime, y = df$Voltage, type='l',
+         ylab = "Voltage", xlab = "")
+    title(sub = 'datetime', line = 3)
+    
+    #1,2
+    plot(x = df$DateTime, y = df$Sub_metering_1, type='l',
+         ylab = "Energy_Sub_Metering", xlab = "")
+    lines(x = df$DateTime, y = df$Sub_metering_2, col = 'red')
+    lines(x = df$DateTime, y = df$Sub_metering_3, col = 'blue');
+    legend("topright",lty = 1,
+           col = c("black","blue", "red"), 
+           bty = 'n',
+           cex = 0.8,
+           legend = c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"))
+    
+    
+    #2,2
+    plot(x = df$DateTime, y = df$Global_reactive_power, type='l',
+         ylab = "Global Reactive Power", xlab = "")
+    title(sub = 'datetime', line = 3)
+})
+```
+
+##Task 3: Saving to file
+We need to open the right device to use. Remember to close once completed.
+```{r eval=FALSE}
+dev.copy(png, 'plot1.R', width = 640, height = 480)
+dev.off()
+```
+

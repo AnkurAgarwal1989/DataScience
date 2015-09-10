@@ -3,10 +3,10 @@ readDataFunc <- function(){
     ##Read the data from originla file if the smaller file has not been created..even once
     if( file.exists("requiredData.csv")){
         requiredData <- read.csv("requiredData.csv", na.strings = c('?', 'NA'), header = T);
-        return(requiredData);
     }
     
-    #else read the fresh original data and also save it out 
+    #else read the fresh original data and also save out the required chunk
+    # we are not gonna read the entire data
     else {
     #Read only 1st column of the database. This column has all dates.
     dataDates <- read.table("household_power_consumption.txt", sep = ';', na.strings = '?', 
@@ -34,9 +34,14 @@ readDataFunc <- function(){
     #bind the list of dfs into 1 data frame
     requiredData <- do.call(rbind, d);
     #name the columns
-    names(df)<-dataNames
+    names(requiredData)<-dataNames
     #write it out to a file so we don't need to run this again and again.
-    write.csv(df, "requiredData.csv")
-    return(requiredData);
+    write.csv(requiredData, "requiredData.csv")
     }
+    
+    requiredData$Date <- as.character.Date(requiredData$Date)
+    requiredData$Time <- as.character.Date(requiredData$Time)
+    requiredData$DateTime <- paste(requiredData$Date, requiredData$Time)
+    requiredData$DateTime <- strptime(requiredData$DateTime, "%d/%m/%Y %H:%M:%S")
+    return(requiredData);
 }
