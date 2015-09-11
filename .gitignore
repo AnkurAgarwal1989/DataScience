@@ -17,5 +17,6 @@ getdata_projectfiles_UCI HAR Dataset
 *.xml
 *.xlsx
 *.xls
+*.rds
 
 ExData_Plotting1
