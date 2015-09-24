@@ -9,14 +9,15 @@ pollMarylandAll <- NEI %>%
     filter(fips == "24510") %>%
     group_by(year, type) %>%
     summarise(sumEm = sum(Emissions))
-
+pollMarylandAll$year = as.factor(pollMarylandAll$year)
 #qplot
 qplot(data=pollMarylandAll, geom = c("point", "smooth"), 
       margins = T, y=sumEm, x= year, color = type) + geom_smooth(size=1)
 
 ##ggplot
 g1 <- ggplot(data=pollMarylandAll, aes(y=sumEm, x= year, color = type))
-g1 + geom_point(size=3) + geom_smooth(method = lm)
+g1 + geom_point(size=3) + geom_smooth()
 
 g2 <- ggplot(data=pollMarylandAll, aes(y=sumEm, x= year, color = type))
-g2 + geom_point(size=3) + geom_smooth(method = lm) + facet_grid(~type)
+g2 + geom_point(size=3) + geom_smooth(method = lm) + facet_grid(~type) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
