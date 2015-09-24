@@ -20,3 +20,4 @@ getdata_projectfiles_UCI HAR Dataset
 *.rds
 
 ExData_Plotting1
+*.RData
