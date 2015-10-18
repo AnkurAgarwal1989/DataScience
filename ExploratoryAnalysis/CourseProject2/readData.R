@@ -1,6 +1,6 @@
-library(dplyr)
-
 setwd("C:/ML_DS/DataScience/ExploratoryAnalysis/CourseProject2")
+library(dplyr)
+library(ggplot2)
 NEI <- readRDS("summarySCC_PM25.rds")
 SCC <- readRDS("Source_Classification_Code.rds")
 

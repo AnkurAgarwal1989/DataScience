@@ -10,7 +10,7 @@ motorVehPoll <- NEI %>%
     group_by(fips, year) %>%
     mutate(sumEm = sum(Emissions))
 
-motorVehPollpn <- merge(motorVehPoll, SCC[, c('SCC', 'Short.Name', 'EI.Sector')], by.x = "SCC", by.y = "SCC", all.x = T, all.y = F, )
+motorVehPollpn <- merge(motorVehPoll, SCC[, c('SCC', 'Short.Name', 'EI.Sector')], by.x = "SCC", by.y = "SCC", all.x = T, all.y = F)
 
 motorVehPoll_baltimore = motorVehPoll[motorVehPoll$fips == "24510", ]
 motorVehPoll_baltimore$year = as.factor(motorVehPoll_baltimore$year)
@@ -21,6 +21,6 @@ motorVehPoll_baltimore <- motorVehPoll_baltimore %>%
 png("plot5.png", 480, 480);
 g <- ggplot(data = motorVehPoll_baltimore, aes(y=sumEm, x=year)) + geom_bar(stat = "identity")
 #g <- ggplot(data = motorVehPoll_baltimore, aes(y=type, x=year)) 
-g + ggtitle("Pollution in Baltimore City") + labs(x="Year", y="Sum of Pollution")
+g + ggtitle("Pollution in Baltimore City") + labs(x="Year", y="Total Pollution (tons)")
 #g + geom_point(aes(size=motorVehPoll_baltimore$sumEm))
 dev.off()

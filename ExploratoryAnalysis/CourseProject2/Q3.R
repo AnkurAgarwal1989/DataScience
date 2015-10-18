@@ -17,7 +17,10 @@ qplot(data=pollMarylandAll, geom = c("point", "smooth"),
 ##ggplot
 g1 <- ggplot(data=pollMarylandAll, aes(y=sumEm, x= year, color = type))
 g1 + geom_point(size=3) + geom_smooth()
-
-g2 <- ggplot(data=pollMarylandAll, aes(y=sumEm, x= year, color = type))
-g2 + geom_point(size=3) + geom_smooth(method = lm) + facet_grid(~type) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+png("plot3.png", 640, 480)
+g2 <- ggplot(data=pollMarylandAll, aes(y=sumEm, x= year, color = type, group=type))
+g2 + geom_point(size=5) + geom_smooth(method = lm) + facet_grid(~type) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+    ggtitle("Pollution from different sources (Baltimore City)") +
+     ylab("Pollution (tons)")
+dev.off()

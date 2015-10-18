@@ -8,11 +8,12 @@ xLabel = "Years"
 mainTitle = "Total Emission over years"
 
 #Base plotting system
+png("plot1.png")
 plot(x = pollByYear, type = 'l', lwd = 3,
      ylab = yLabel, xaxt = 'n',
      main = mainTitle)
 axis(1, at = seq(1999, 2008, 1), las = 2)
-dev.copy(png, "TotalEmission_Year_Base.png")
+#dev.copy(png, "TotalEmission_Year.png")
 dev.off()
 #dev.off(dev.prev())
 

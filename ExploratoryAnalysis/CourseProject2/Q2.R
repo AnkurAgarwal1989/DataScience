@@ -12,10 +12,11 @@ xLabel = "Years"
 mainTitle = "Total Emission in Maryland over years"
 
 ## Base plot
+png("plot2.png")
 plot(pollMaryland, type = 'l', ylab = "Total Emissions (tons)", xaxt = 'n', lwd = 3,
      main = "Total Emission in Maryland over years")
 axis(1, at = seq(1999, 2008, 1), las = 2)
-dev.copy(png, "TotalEmission_Maryland_Base.png")
+#dev.copy(png, "TotalEmission_Maryland_Base.png")
 dev.off(which = dev.cur())
 
 ##gplot

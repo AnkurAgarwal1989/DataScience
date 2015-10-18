@@ -30,7 +30,9 @@ reqdNEI <- read.csv('coalCombustionSources.csv')
 reqdNEI <- reqdNEI %>%
     group_by(year, type) %>%
     summarise(sumEm = sum(Emissions))
+reqdNEI$year <- as.factor(reqdNEI$year)
 png("plot4.png", 480, 480);
 g <- ggplot(data = reqdNEI, aes(y = sumEm, x = year, fill = type)) + geom_bar(stat = "identity", position="dodge")
-g + scale_fill_discrete(name="Pollutant Type")
+g + scale_fill_discrete(name="Pollutant Type") + ggtitle("Emission from coal combustion sources") +
+    ylab("Total Pollution (tons)")
 dev.off()
