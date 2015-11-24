@@ -1,0 +1,164 @@
+---
+title: "NOAA Storm Database Analysis"
+author: "Ankur Agarwal"
+date: "October 23, 2015"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    fig_caption: yes
+    toc: yes
+---
+
+This document analyses the NOAA storm database. The aim is to identify weather events that are most harmful in terms of poplulation health and economic consequences.
+
+```{r message=FALSE}
+#libraries used
+library(dplyr)
+library(ggplot2)
+library(scales)
+```
+
+#Data Processing
+###Reading in the data.
+We are interested in damage to human life and over all economic damage caused by storms. For this, we need the `EVTYPE`, `FATALITIES`, `INJURIES`, `PROPDMG`, `PROPDMGEXP`, `CROPDMG` and `CROPDMGEXP`. We are not currently concerned with the dates and such. They do not need to be a part of our analysis to answer the 2 questions asked. The data is given from 1950 to 2011. We can use all of it since we we are only interested in occurance and damage. The lack of logging, etc. should not affect our results.
+```{r message=FALSE, cache=TRUE}
+#Reading in the data.
+storm <- read.csv("repdata_data_StormData.csv.bz2", as.is = T)
+
+storm_damages <- storm %>% 
+    select(EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP) %>%
+    filter((as.numeric(FATALITIES) + as.numeric(INJURIES) + as.numeric(PROPDMG) +
+               as.numeric(CROPDMG)) > 0)
+
+rm(storm)
+
+#Make all names uppercase
+storm_damages$EVTYPE <- toupper(storm_damages$EVTYPE)
+
+```
+The event names are inconsistent (with some spelling mistakes to add to the fun). we need to devise a strategy to identify correct event names. We can create a table of the occurances of unique event names in the DB. This results in ~400 event names.
+
+We can create a bag of words of event names from this list of events. To start with, we choose events with only single words in the names.The reasoning for this is that most event names consist of 2 elements: a noun and an adjective, for example `EXTREME COLD`. We could easily call this `COLD` without any issues.
+
+If these names are directly present in the remaining event names, we will rename them to the event names in the Bag of Words. For the remaining ones, we calculate the `adist` metric with a higher cost to `insertions` and `substitutions` than `deletions`; and replace them by the closest match. This will take care of wrong spellings and such.
+
+```{r}
+#Code to create Bag of Words for event types. 
+
+#find all unique entries
+eventNames <- unique(storm_damages$EVTYPE)
+
+#To start with, get all event names with 1 word names
+#get length of one word event types, this will be our Bag Of Words for events
+l <- lapply(eventNames, function(x){length(strsplit(x, '[ -?./\\]')[[1]])})
+event_BoW <- eventNames[which(l == 1)]
+#There are names with plurals and . in the end. Remove the extra characters
+event_BoW <- unique(sapply(event_BoW, function(x) {
+    if(substring(x, nchar(x)) %in% c("S", ".", "?", "-")){
+        x <- substr(x, 1, nchar(x)-1)
+    }
+    else
+        x <- x}))
+#Removing entries with 0 length
+event_BoW <- sort(event_BoW[nchar(event_BoW) > 0])
+
+#group of names entered in error, these need to be removed explicitly
+namesForRemoval <- c("AVALANCE", "FLOODING", "GUSTNADO", "HAILSTORM", "HIGH", 
+                  "LIGHTING", "LIGNTNING", "RAINSTORM",  
+                 "THUNDERSNOW", "THUNDERSTORMW", "THUNDERSTORMWIND", "TORNADOE",
+                 "TORNDAO", "TSTMW" )
+event_BoW <- event_BoW[!event_BoW %in% namesForRemoval]
+
+#another set of names that do not exist and need to be added to the list of events
+namesToAdd <- c("WINTER", "CURRENT")
+event_BoW <- sort(c(event_BoW, namesToAdd))
+
+#Replace TSTM by THUNDERSTORM
+storm_damages$EVTYPE <- gsub("TSTM", "THUNDERSTORM", storm_damages$EVTYPE)
+#Rename EVTYPE to the Bag of Words
+d <- adist(storm_damages$EVTYPE, event_BoW,  costs=list(insertions=20, deletions=1, substitutions=10), partial = F)
+
+#Find the closest match
+minOfRows=apply(d, 1, function(x) which.min(x) )
+storm_damages$cleanedEVTYPE <- event_BoW[minOfRows]
+
+```
+
+#Results
+
+###1. Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+We do not have a metric to choose if damage from injuries outweights fatalities. We can use an equal weight for both. If a metris provided, the weighting can be eaily changed. The `FATALITIES` and `INJURIES` columns contain number of people affected. We add these in proportion to the weighting strategy (1:1 in our case), to fnd total human harm by an event.
+```{r fig.align="center", fig.height=8, fig.width=12}
+
+#Code to calculate harm to human life.
+wt_Injury = 1;
+wt_Fatality = 1;
+storm_lifeDamage <- storm_damages %>%
+    select(cleanedEVTYPE, FATALITIES, INJURIES) %>%
+    mutate(allDamage = (wt_Injury * INJURIES) + (wt_Fatality * FATALITIES)) %>%
+    filter(allDamage > 0) %>%
+    group_by(cleanedEVTYPE) %>%
+    mutate(totalDamage = sum(allDamage), medianDamage = median(allDamage), count = n())
+
+g <- ggplot(data= storm_lifeDamage, aes(x = reorder(cleanedEVTYPE, -totalDamage), y=log10(allDamage)))
+g <- g + geom_boxplot(outlier.colour= alpha("black", 0.4)) + theme(axis.text.x=element_text(angle = -90, hjust = 0))
+g <- g + geom_point(aes(y = log10(medianDamage), size = count, color = count)) +
+    scale_size(name = "# of recorded occurances",range = c(3,9)) +
+    scale_color_gradient(name = "# of recorded occurances", low = "red", high = "red") +
+    guides(color = guide_legend() , size = guide_legend()) + 
+    theme(legend.position = "bottom") +
+    labs(x="Event Type; arranged by total # of people affected over years (high to low)", 
+         y="log10 (# of people affected)") + 
+    ggtitle("Boxplot showing # of people affected by different events")
+g
+
+```
+
+>Understanding the graphs: The graphs contain a lot of information regarding the events, occurances and damages. We aim to provide total damage, median damage, outliers and frequency, in 1 informative graph.
+
+1. The x-Axis is arranged by total damage over the years (high to low). The y-Axis shows data in log10 scale to allow for larger values.
+2. The box and whisker plots show the overall trend for an event. This helps in finding events which cause high damage but not very frequent. Look for events with the median lines higher than others to find events that have higher damage in one occurance.
+3. The red dots (superimposed on the median lines of the box plots), show the # of occurances of the event. Larger the dot, more frequent the event over the years.
+
+###2. Across the United States, which types of events have the greatest economic consequences?
+`PROPDMGEXP` and `CROPDMGEXP` need to be used to calculate the damage. `H`, `K`, `M` and `B` are straightforward as `10^2`, `10^3`, `10^6` and `10^9`. We need to make some educated guess for the other values. For the symbols, we can use `10^0`, while the numbers (0-9) can be just `10^n`. This may not be accurate everywhere, but seems correct for most places.
+```{r fig.align="center", fig.height=8, fig.width=12}
+
+#Code to calculate economic consequences.
+dmgSymbol <- unique(tolower(c(storm_damages$PROPDMGEXP, storm_damages$CROPDMGEXP)))
+#let the numbers be..we can use the entries as is
+dmgSymbol <- sort(dmgSymbol[!dmgSymbol %in% c(0:9)])
+dmgValue <- c(0, 0, 0, 0, 9, 2, 3, 6)
+subInData <- function(x){
+    storm_damages$PROPDMGEXP[tolower(storm_damages$PROPDMGEXP) == dmgSymbol[x]] <<- as.numeric(dmgValue[x])
+    storm_damages$CROPDMGEXP[tolower(storm_damages$CROPDMGEXP) == dmgSymbol[x]] <<- as.numeric(dmgValue[x])
+}
+
+for (i in c(1:length(dmgSymbol))){
+    subInData(i)
+}
+
+storm_damages$PROPDMGEXP <- as.numeric(storm_damages$PROPDMGEXP)
+storm_damages$CROPDMGEXP <- as.numeric(storm_damages$CROPDMGEXP)
+
+storm_econDamage <- storm_damages %>%
+    select(cleanedEVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP) %>%
+    mutate(allDamage = (PROPDMG * (10 ^ PROPDMGEXP) + CROPDMG * (10 ^ CROPDMGEXP))) %>%
+    filter(allDamage > 0) %>%
+    group_by(cleanedEVTYPE) %>%
+    mutate(totalDamage = sum(allDamage), medianDamage = median(allDamage), count = n())
+
+g <- ggplot(data= storm_econDamage, aes(x = reorder(cleanedEVTYPE, -totalDamage), y=log10(allDamage)))
+g <- g + geom_boxplot(outlier.colour= alpha("black", 0.4)) + theme(axis.text.x=element_text(angle = -90, hjust = 0))
+g <- g + geom_point(aes(y = log10(medianDamage), size = count, color = count)) +
+    scale_size(name = "# of recorded occurances",range = c(3,9)) +
+    scale_color_gradient(name = "# of recorded occurances", low = "red", high = "red") +
+    guides(color = guide_legend() , size = guide_legend()) + 
+    theme(legend.position = "bottom") +
+    labs(x="Event Type; arranged by total economic damage over years (high to low)", 
+         y="log10 (economic damage in $)") + 
+    ggtitle("Boxplot showing economic damage in $ by different events")
+g
+
+```
